@@ -2,10 +2,10 @@ module VoronoiGraph
 
 using LinearAlgebra
 using NearestNeighbors
-using StaticArrays
 using Polyhedra
 using ProgressMeter
 using SparseArrays
+using StaticArrays
 
 include("voronoi.jl")
 include("volume.jl")

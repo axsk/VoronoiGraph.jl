@@ -23,13 +23,13 @@ function boundary_area_edges(g1::Int, g2::Int, vertices::AbstractVector{<:Sigma}
     end
     halfspaces = [h for h in halfspaces]
 
-    poly = polyhedron(hrep(halfspaces))
-    # performance with libs 6x100
+    # Performance with different libraries on random 6x100 data:
     # nolib: 30 mins
     # CDDLib: 40 mins
     # QHull: 5h (with warnings about not affine polyhedron using a solver)
-
+    poly = polyhedron(hrep(halfspaces))
     vol = hasrays(poly) ? Inf : volume(poly)
+
     return vol
 end
 
@@ -38,9 +38,10 @@ the first dimension. A->B will be mapped to const*[1,0,0,...] and (A+B)/2 to [0,
 function transformation(A, B)
     R = diagm(ones(length(A)))
     R[:,1] = B-A
-    R = inv(qr(R).Q)  # shortcut for gram schmidt orthogonalization
+    R = inv(qr(R).Q)  # Shortcut for Gram-Schmidt orthogonalization.
     t = R*(A+B)/2
     transform(x) = R*x - t
+    return transform
 end
 
 """ build the connectivity matrix for the SQRA from adjacency and boundary information """
@@ -56,7 +57,7 @@ function area_volume(vertices, P::AbstractVector)
     @showprogress 1 "Voronoi adjacency " for ((g1,g2), sigs) in conns
         A = boundary_area_edges(g1, g2, sigs, P)
         h = norm(P[g1] - P[g2]) / 2
-        v = A * h / dim  # volume computation
+        v = A * h / dim  # Volume computation
         push!(I, g1)
         push!(J, g2)
         push!(V, A/h)
@@ -69,11 +70,11 @@ function area_volume(vertices, P::AbstractVector)
     return A, Vs
 end
 
-# for the sqra
+# Used for Sqra.jl
 function connectivity_matrix(vertices, P::AbstractVector)
     A, Vs = area_volume(vertices, P)
-    Vs = replace(Vs, 0 => Inf)  # if we have 0 volume, we have no rates
-    Vsi = 1 ./ Vs # TODO: check if we want row or col
+    Vs = replace(Vs, 0 => Inf)  # If we have 0 volume, we have no rates.
+    Vsi = 1 ./ Vs  # TODO: Check if we want row or col
     A = A .* Vsi
     return A, Vs
 end
@@ -83,7 +84,7 @@ end
 collect the verts belonging to generator pairs, i.e. boundary vertices """
 function adjacency(v::Vertices)
     conns = Dict{Tuple{Int,Int}, Vector{Vector{Int}}}()
-    #conns=Dict()
+
     for (sig, r) in v
         for a in sig
             for b in sig
@@ -93,10 +94,9 @@ function adjacency(v::Vertices)
             end
         end
     end
-    conns
-end
 
-using Polyhedra
+    return conns
+end
 
 
 """ similar to `boundary_area_edges`, however uses a vector representation and is slower """
@@ -105,14 +105,12 @@ function boundary_vrep(g1::Int, g2::Int, inds::AbstractVector{<:Sigma}, vertices
     B = generators[g2]
     dim = length(A)
     vertex_coords = map(i->vertices[i], inds)
-    push!(vertex_coords, A)  # append one voronoi center for full volume
-    V = try
-            volume(polyhedron(vrep(vertex_coords), QHull.Library()))
-        catch e #::QHull.PyCall.PyError
-            0
-        end
+    push!(vertex_coords, A)  # Append one Voronoi center for full-dimensional volume.
+
+    poly = polyhedron(vrep(vertex_coords), QHull.Library())
+    vol = hasrays(poly) ? Inf : volume(poly)
 
     h = norm(B - A) / 2
-    A = dim * V / h
-    A, h, V
+    A = dim * vol / h
+    return A, h, vol
 end
