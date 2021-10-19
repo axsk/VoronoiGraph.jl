@@ -5,7 +5,7 @@
 It works by constructing a polytope from halfspaces between the generators of the boundary
 vertices. We use an affine transformation to get rid of the dimension in direction g1->g2
 """
-function boundary_area_edges(g1::Int, g2::Int, vertices::AbstractVector{<:Sigma}, generators)
+function boundary_area(g1::Int, g2::Int, vertices::AbstractVector{<:Sigma}, generators)
     A = generators[g1]
     B = generators[g2]
     transform = transformation(A, B)
@@ -51,34 +51,24 @@ function area_volume(vertices, P::AbstractVector)
 
     I = Int[]
     J = Int[]
-    V = Float64[]
+    As = Float64[]
     Vs = zeros(length(P))
 
     @showprogress 1 "Voronoi adjacency " for ((g1,g2), sigs) in conns
-        A = boundary_area_edges(g1, g2, sigs, P)
+        a = boundary_area(g1, g2, sigs, P)
         h = norm(P[g1] - P[g2]) / 2
-        v = A * h / dim  # Volume computation
+        v = a * h / dim  # Volume computation
         push!(I, g1)
         push!(J, g2)
-        push!(V, A/h)
+        push!(As, a)
         Vs[g1] += v
         Vs[g2] += v
     end
-    A = sparse(I, J, V, length(P), length(P))
+    A = sparse(I, J, As, length(P), length(P))
     A = A + A'
 
     return A, Vs
 end
-
-# Used for Sqra.jl
-function connectivity_matrix(vertices, P::AbstractVector)
-    A, Vs = area_volume(vertices, P)
-    Vs = replace(Vs, 0 => Inf)  # If we have 0 volume, we have no rates.
-    Vsi = 1 ./ Vs  # TODO: Check if we want row or col
-    A = A .* Vsi
-    return A, Vs
-end
-
 
 """ given vertices in generator-coordinates,
 collect the verts belonging to generator pairs, i.e. boundary vertices """
@@ -99,8 +89,8 @@ function adjacency(v::Vertices)
 end
 
 
-""" similar to `boundary_area_edges`, however uses a vector representation and is slower """
-function boundary_vrep(g1::Int, g2::Int, inds::AbstractVector{<:Sigma}, vertices::Vertices, generators)
+""" similar to `boundary_area`, however uses a vector representation and is slower """
+function boundary_area_vrep(g1::Int, g2::Int, inds::AbstractVector{<:Sigma}, vertices::Vertices, generators)
     A = generators[g1]
     B = generators[g2]
     dim = length(A)
