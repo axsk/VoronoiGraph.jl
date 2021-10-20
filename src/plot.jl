@@ -3,6 +3,7 @@
 @recipe function f(p::VoronoiPlot; fill_z=nothing)
 	v, P = p.args
 	fs = faces(v, P)
+    label --> ""
 
 	for (i, f) in enumerate(fs)
 		@series begin
