@@ -18,7 +18,7 @@ which returns the vertices (`v`) of the complete tesselation.
 
 It also exports the random walk variant (returning only a subset of vertices):
 ```julia
-julia> v, P = voronoi(data, 1000)  # perform 1000 iterations of the random walk
+julia> v, P = voronoi_random(data, 1000)  # perform 1000 iterations of the random walk
 ```
 
 ## Area / Volume computation
