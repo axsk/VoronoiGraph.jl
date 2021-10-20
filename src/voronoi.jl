@@ -142,7 +142,7 @@ function explore(sig, r, xs::Points, searcher) :: Vertices
 
     end
 
-    @show hit, miss, new, unbounded
+    #@show hit, miss, new, unbounded
     return verts
 end
 
