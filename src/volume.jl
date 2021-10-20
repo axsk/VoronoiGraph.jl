@@ -54,7 +54,7 @@ function area_volume(vertices, P::AbstractVector)
     As = Float64[]
     Vs = zeros(length(P))
 
-    @showprogress 1 "Voronoi adjacency " for ((g1,g2), sigs) in conns
+    @showprogress 1 "Voronoi volumes " for ((g1,g2), sigs) in conns
         a = boundary_area(g1, g2, sigs, P)
         h = norm(P[g1] - P[g2]) / 2
         v = a * h / dim  # Volume computation
