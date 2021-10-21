@@ -16,6 +16,7 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 NearestNeighbors = "0.4"
 Polyhedra = "0.6"
 ProgressMeter = "1"
+RecipesBase = "1"
 StaticArrays = "0.12, 1"
 julia = "1.6"
 
