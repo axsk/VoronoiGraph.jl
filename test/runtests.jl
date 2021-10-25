@@ -5,6 +5,7 @@ using BenchmarkTools
 using LinearAlgebra
 using Random
 using RecipesBase
+using Statistics
 using VoronoiCells
 using VoronoiCells.GeometryBasics
 
@@ -50,6 +51,18 @@ end
         println("comparing areas on $(sum(small)) out of $(length(small)) cells")
 
         @test ≈(A[small], area[small], rtol=1e-8)
+    end
+
+    @testset "Monte Carlo Volumes" begin
+        function std_error_mc_volumes(n=20, d=2, mc=10000)
+            x = rand(d,n)
+            v, xs = voronoi(x)
+            A, V = area_volume(v, xs)
+            Am, Vm = mc_volumes(xs, mc)
+            std(filter(isfinite, (Am-A)./A))
+        end
+
+        @test std_error_mc_volumes() < 0.2
     end
 
     @testset "Plot recipe" begin

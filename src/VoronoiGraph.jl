@@ -11,7 +11,8 @@ using RecipesBase
 include("voronoi.jl")
 include("volume.jl")
 include("plot.jl")
+include("montecarlo.jl")
 
-export voronoi, voronoi_random, area_volume, adjacency
+export voronoi, voronoi_random, area_volume, adjacency, mc_volumes
 
 end

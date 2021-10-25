@@ -22,9 +22,12 @@ julia> v, P = voronoi_random(data, 1000)  # perform 1000 iterations of the rando
 ```
 
 ## Area / Volume computation
-The function `area_volume` computes the areas of the boundaries of neighbouring cells
+The function `area_volume` computes the (exact) areas of the boundaries of neighbouring cells
 as well as the volume of the cells themselves by falling back onto the Polyhedra.jl volume computation.
 This can be useful for finite volume discretizations, e.g. in the Sqra.jl (TBP) package.
+
+Alternatively the function `mc_volumes(xs::Points)` computes an Monte-Carlo estimate of the
+areas and volumes and scales better in higher dimensions.
 
 ## References
 [\[1\]](https://dl.acm.org/doi/10.1145/3394486.3403266) V. Polianskii, F. T. Pokorny - Voronoi Graph Traversal in High Dimensions with Applications to Topological Data Analysis and Piecewise Linear Interpolation (2020, Proceedings of the 26th ACM SIGKDD International Conference on Knowledge Discovery & Data Mining)
