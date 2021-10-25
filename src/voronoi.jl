@@ -13,7 +13,8 @@ voronoi(x; kwargs...) = voronoi(vecvec(x); kwargs...)
 
 """ construct the voronoi diagram from `x` through breadth-first search """
 function voronoi(xs::Points; tmax=1000)
-    searcher = SearchIncircle(tmax, KDTree(xs))
+    #searcher = SearchIncircle(tmax, KDTree(xs))
+    searcher = RaycastCompare(KDTree(xs), tmax)
     sig, r = descent(xs, searcher)
     verts = explore(sig, r, xs, searcher)
     return verts::Vertices, xs
@@ -277,6 +278,24 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
     return tau, t
 end
 
+struct RaycastCompare
+    tree::KDTree
+    tmax
+end
+
+function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCompare)
+    s1 = SearchIncircle(searcher.tmax, searcher.tree)
+    s2 = SearchIncircleSkip(searcher.tree)
+
+    r1 = raycast(sig, r, u, xs, s1)
+    r2 = raycast(sig, r, u, xs, s2)
+
+    #@show r1, r2
+    @assert r1[1] == r2[1]
+    return r1
+end
+
+
 #=
 function raycast_compare(sig, r, u, P, searcher)
     r1  = raycast_incircle(sig,r,u,P,searcher)
@@ -288,39 +307,26 @@ function raycast_compare(sig, r, u, P, searcher)
 end
 =#
 
-#=
-# experiment with a 'skipping' initial guess
-function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchIncircle)
-    i = 0
-    t = 1
-    x0 = xs[sig[1]]
-    local d, n
-    # find a t large enough to include a non-boundary (sig) point
-    @time while t < searcher.tmax
-        n, d = nn(searcher.tree, r+t*u)
-        if d==Inf
-            warn("d==Inf in raycast expansion, this should never happen")
-            return [0; sig], Inf
-        end
+struct SearchIncircleSkip
+    tree::KDTree
+end
 
-        if n in sig
-            t = t * 2
-        else
-            i = n
-            break
-        end
-    end
-    skip(i) = (u' * (xs[i]-x0) <= 0) || i ∈ sig
-    @time dir, dd = nn(searcher.tree, r #=+ u * (u' * (x0-r))=#, skip)
-    dir == 0 && error()
-    @show t
-    if i == 0
-        @show Inf
-        @show dir, dd
-        sleep(1)
-        error()
-        return [0; sig], Inf
-    end
+function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchIncircleSkip)
+
+    x0 = xs[sig[1]]
+
+    #c = dot(x0, u)
+    c = maximum(dot(xs[g], u) for g in sig)
+    #c = maximum(dists)
+    #@show c
+
+    # only consider points on the right side of the hyperplane
+    #skip(i) = (u' * (xs[i]-x0) <= 0) || i ∈ sig
+    skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
+
+    i, t = nn(searcher.tree, r + u * (u' * (x0-r)), skip)
+
+    t == Inf && return [0; sig], Inf
 
     # sucessively reduce incircles unless nothing new is found
     while true
@@ -336,22 +342,5 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
 
     tau = sort([i; sig])
 
-    if false && dir != i
-        @show i, dir
-        c = r+t*u
-        @show norm(c-x0), norm(c-xs[i]), t
-
-        let x = xs[dir]
-            let t = (sum(abs2, r - x) - sum(abs2, r - x0)) / (2 * u' * (x-x0))
-                c = r+t*u
-                @show norm(c-x0), norm(c-x), t
-            end
-        end
-        @show skip(i)
-    end
-
-
     return tau, t
 end
-
-=#
