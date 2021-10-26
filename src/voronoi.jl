@@ -10,7 +10,7 @@ voronoi(x; kwargs...) = voronoi(vecvec(x); kwargs...)
 """ construct the voronoi diagram from `x` through breadth-first search """
 function voronoi(xs::Points)
     #searcher = SearchIncircle(tmax, KDTree(xs))
-    searcher = RaycastCompare(KDTree(xs), 10000, 1e-8, zeros(4))
+    searcher = Raycast(xs)
     sig, r = descent(xs, searcher)
     verts = explore(sig, r, xs, searcher)
     @show searcher.timings
@@ -87,7 +87,9 @@ function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
     if (u' * (xs[sig[i]] - xs[sig_del[1]])) > 0
         u = -u
     end
+    #@show map(s->u'*(xs[s]-r), sig)
     sig_new, t = raycast(sig_del, r, u, xs, searcher)
+    #sig[i] in sig_new && @warn("recurred")
     if t < Inf
         sig = sig_new
         r = r + t*u

@@ -14,11 +14,36 @@ function raycast(sig::Sigma, r, u, xs, searcher::SearchBruteforce)
     (tau, ts) = [0; sig], Inf
     x0 = xs[sig[1]]
 
+    #reltol = 1e-6
+
+    #tmin = abs(dot(u, r-x0) * reltol)
+    #tmin = norm(r-x0) * reltol
+    #tmin = 0
+    #tmin = 1e-8
+    #tmid = dot(u, x0-r)
+
+    c = maximum(dot(xs[g], u) for g in sig)
+    skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
+
+    #@show tmin = - sum(abs2, r .- x0) / (2 * u' * (r-x0))
+
     for i in 1:length(xs)
-        i in sig && continue
+        # i in sig && continue
+        skip(i) && continue
         x = xs[i]
         t = (sum(abs2, r .- x) - sum(abs2, r .- x0)) / (2 * u' * (x-x0))
-        if searcher.tmin < t < ts
+        # if u'*(x-r) < 0
+        #     @show map(s->u'*(xs[s]-r), sig)
+        #     #continue
+        # end
+        # if t < tmid
+        #     #@show tmid
+        #     #@show dot(u, x-x0)
+        # end
+
+
+
+        if 0 < t < ts
             (tau, ts) = vcat(sig, [i]), t
         end
     end
@@ -135,11 +160,10 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
     # try catch workaround for https://github.com/KristofferC/NearestNeighbors.jl/issues/127
     local i, t
     try
-        i, t = nn(searcher.tree, r + u * (u' * (x0-r)), skip)
+        i, t = nn(searcher.tree, r #= + u * (u' * (x0-r)) =#, skip)
     catch
         return [0; sig], Inf
     end
-
     t == Inf && return [0; sig], Inf
 
     # sucessively reduce incircles unless nothing new is found
@@ -147,7 +171,7 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
         x = xs[i]
         t = (sum(abs2, r - x) - sum(abs2, r - x0)) / (2 * u' * (x-x0))
         j, _ = nn(searcher.tree, r+t*u)
-        if j in [sig; i]
+        if j in sig || j == i
             break
         else
             i = j
@@ -181,7 +205,9 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCo
     searcher.timings .+= [t1, t2, t3, t4]
 
     if !(r1[1]==r2[1]==r3[1]==r4[1])
-        @warn "raycast algorithms return different results" r1 r2 r3 r4
+        @warn "raycast algorithms return different results" r1 r2 r3 r4 tuple(r...)
+        #x0 = xs[sig[1]]
+        #@show tmid = dot(u, x0-r)
     end
     return r4
 end
