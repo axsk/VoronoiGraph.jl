@@ -8,28 +8,7 @@ Estimate the area and volume of the `i`-th Voronoi cell from the Voronoi Diagram
 by a Monte Carlo estimate from random rays
 """
 function mc_volume(i, xs, nmc=1000, searcher = SearchIncircle(KDTree(xs), 100))
-
-    x = xs[i]
-    d = length(x)
-
-    V = 0.
-    A = spzeros(length(xs))
-
-    for iter in 1:nmc
-        u = normalize(randn(d))
-        (j, t) = raycast([i], x, u, xs, searcher)
-
-        V += t^d
-
-        t == Inf && continue
-        j = pop!(setdiff(j, i))
-        normal = normalize(xs[j] - xs[i])
-        A[j] += t ^ (d-1) / abs(dot(normal, u))
-    end
-
-    V *= π^(d/2) / gamma(d/2 + 1) / nmc
-    A *= 2 * π^(d/2) / gamma(d/2) / nmc
-
+    y, δy, V, A = mc_integrate(x->1, i, xs, nmc, 0, searcher)
     A, V
 end
 
@@ -55,4 +34,49 @@ function mc_volumes(xs::Points, nmc=1000)
     end
     #A = (A + A') / 2
     A, V
+end
+
+
+
+function mc_integrate(f, i, xs::Vector, nmc=1000, nmc2=1000, searcher = SearchIncircle(KDTree(xs), 100))
+    x = xs[i]
+    d = length(x)
+
+    # volume/area computations are basically for free, leaving them commented for now
+    V = 0.
+    A = spzeros(length(xs))
+
+    y = 0.
+    δy = spzeros(length(xs))
+
+    for _ in 1:nmc
+        u = normalize(randn(d))
+        (j, t) = raycast([i], x, u, xs, searcher)
+
+        V += t^d
+        for _ in 1:nmc2
+            r = t * rand()
+            x′ = x + u * r
+            y += f(x′) * r^(d-1) * t
+        end
+
+        if t < Inf
+            j = j[1] == i ? j[2] : j[1]
+            normal = normalize(xs[j] - xs[i])
+            dA = t ^ (d-1) / abs(dot(normal, u))
+            A[j] += dA
+            δy[j] += dA * f(x + t*u)
+        end
+    end
+
+    c_vol = pi^(d/2) / gamma(d/2 + 1)
+    c_area = d * c_vol
+
+    V *= c_vol / nmc
+    A *= c_area / nmc
+
+    y *= c_area / nmc / nmc2
+    δy *= c_area / nmc
+
+    y, δy, V, A
 end
