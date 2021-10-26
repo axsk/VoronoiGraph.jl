@@ -4,19 +4,16 @@ const Sigma = AbstractVector{<:Integer}  # Encoded the vertex by the ids of its 
 const Vertex = Tuple{<:Sigma, <: Point}
 const Vertices = Dict{<:Sigma, <:Point}
 
-struct SearchIncircle
-    tmax::Float64
-    tree::KDTree
-end
 
 voronoi(x; kwargs...) = voronoi(vecvec(x); kwargs...)
 
 """ construct the voronoi diagram from `x` through breadth-first search """
-function voronoi(xs::Points; tmax=1000)
+function voronoi(xs::Points)
     #searcher = SearchIncircle(tmax, KDTree(xs))
-    searcher = RaycastCompare(KDTree(xs), tmax)
+    searcher = RaycastCompare(KDTree(xs), 10000, 1e-8, zeros(4))
     sig, r = descent(xs, searcher)
     verts = explore(sig, r, xs, searcher)
+    @show searcher.timings
     return verts::Vertices, xs
 end
 
@@ -24,7 +21,7 @@ voronoi_random(x, args...; kwargs...) = voronoi_random(vecvec(x), args...; kwarg
 
 """ construct a (partial) voronoi diagram from `x` through a random walk """
 function voronoi_random(xs::Points, iter=1000; tmax=1000, maxstuck=typemax(Int))
-    searcher = SearchIncircle(tmax, KDTree(xs))
+    searcher = SearchIncircle(KDTree(xs), tmax)
     sig, r = descent(xs, searcher)
     verts = walk(sig, r, iter, xs, searcher, maxstuck)
     return verts::Vertices, xs
@@ -176,12 +173,16 @@ end
 
 ## Implementations of different raycasting search algorithms
 
-struct SearchBruteforce end
+Raycast(xs) = RaycastCompare
+
+struct SearchBruteforce
+    eps
+end
 
 """ shooting a ray in the given direction, find the next connecting point.
 This is the bruteforce variant, using a linear search to find the closest point """
 function raycast(sig::Sigma, r, u, xs, searcher::SearchBruteforce)
-    eps = 1e-10
+    eps = searcher.eps
     (tau, ts) = [0; sig], Inf
     x0 = xs[sig[1]]
 
@@ -199,8 +200,9 @@ end
 
 
 struct SearchBisection
-    eps::Float64
     tree::KDTree
+    tmax
+    eps::Float64
 end
 
 """ shooting a ray in the given direction, find the next connecting point.
@@ -231,6 +233,12 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchBis
     end
 
     return sort(tau), tr
+end
+
+
+struct SearchIncircle
+    tree::KDTree
+    tmax::Float64
 end
 
 """ Shooting a ray in the given direction, find the next connecting point.
@@ -281,17 +289,29 @@ end
 struct RaycastCompare
     tree::KDTree
     tmax
+    eps
+    timings
 end
 
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCompare)
-    s1 = SearchIncircle(searcher.tmax, searcher.tree)
+    s1 = SearchIncircle(searcher.tree, searcher.tmax)
     s2 = SearchIncircleSkip(searcher.tree)
+    s3 = SearchBisection(searcher.tree, searcher.tmax, searcher.eps)
+    s4 = SearchBruteforce(searcher.eps)
 
-    r1 = raycast(sig, r, u, xs, s1)
-    r2 = raycast(sig, r, u, xs, s2)
+    t1 = @elapsed r1 = raycast(sig, r, u, xs, s1)
+    t2 = @elapsed r2 = raycast(sig, r, u, xs, s2)
+    t3 = @elapsed r3 = raycast(sig, r, u, xs, s3)
+    t4 = @elapsed r4 = raycast(sig, r, u, xs, s4)
+
+    searcher.timings .+= [t1, t2, t3, t4]
 
     #@show r1, r2
-    @assert r1[1] == r2[1]
+    if !(r1[1]==r2[1]==r3[1]==r4[1])
+        @show r1, r2, r3, r4
+        error("raycast algoriths return different results")
+    end
+    #@assert r1[1] == r2[1]
     return r1
 end
 
