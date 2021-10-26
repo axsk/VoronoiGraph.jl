@@ -176,13 +176,12 @@ end
 Raycast(xs) = RaycastCompare
 
 struct SearchBruteforce
-    eps
+    tmin
 end
 
 """ shooting a ray in the given direction, find the next connecting point.
 This is the bruteforce variant, using a linear search to find the closest point """
 function raycast(sig::Sigma, r, u, xs, searcher::SearchBruteforce)
-    eps = searcher.eps
     (tau, ts) = [0; sig], Inf
     x0 = xs[sig[1]]
 
@@ -190,7 +189,7 @@ function raycast(sig::Sigma, r, u, xs, searcher::SearchBruteforce)
         i in sig && continue
         x = xs[i]
         t = (sum(abs2, r .- x) - sum(abs2, r .- x0)) / (2 * u' * (x-x0))
-        if eps < t < ts
+        if searcher.tmin < t < ts
             (tau, ts) = vcat(sig, [i]), t
         end
     end
@@ -294,10 +293,10 @@ struct RaycastCompare
 end
 
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCompare)
-    s1 = SearchIncircle(searcher.tree, searcher.tmax)
-    s2 = SearchIncircleSkip(searcher.tree)
-    s3 = SearchBisection(searcher.tree, searcher.tmax, searcher.eps)
-    s4 = SearchBruteforce(searcher.eps)
+    s1 = SearchBruteforce(searcher.eps)
+    s2 = SearchBisection(searcher.tree, searcher.tmax, searcher.eps)
+    s3 = SearchIncircle(searcher.tree, searcher.tmax)
+    s4 = SearchIncircleSkip(searcher.tree)
 
     t1 = @elapsed r1 = raycast(sig, r, u, xs, s1)
     t2 = @elapsed r2 = raycast(sig, r, u, xs, s2)
@@ -308,11 +307,10 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCo
 
     #@show r1, r2
     if !(r1[1]==r2[1]==r3[1]==r4[1])
-        @show r1, r2, r3, r4
-        error("raycast algoriths return different results")
+        @warn "raycast algorithms return different results" r1 r2 r3 r4
     end
     #@assert r1[1] == r2[1]
-    return r1
+    return r4
 end
 
 
