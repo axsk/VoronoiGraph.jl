@@ -324,7 +324,13 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
     #skip(i) = (u' * (xs[i]-x0) <= 0) || i ∈ sig
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
-    i, t = nn(searcher.tree, r + u * (u' * (x0-r)), skip)
+    # try catch workaround for https://github.com/KristofferC/NearestNeighbors.jl/issues/127
+    local i, t
+    try
+        i, t = nn(searcher.tree, r + u * (u' * (x0-r)), skip)
+    catch
+        return [0, sig], Inf
+    end
 
     t == Inf && return [0; sig], Inf
 
