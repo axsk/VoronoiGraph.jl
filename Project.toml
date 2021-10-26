@@ -18,6 +18,7 @@ NearestNeighbors = "0.4"
 Polyhedra = "0.6"
 ProgressMeter = "1"
 RecipesBase = "1"
+SpecialFunctions = "1"
 StaticArrays = "0.12, 1"
 julia = "1.6"
 
