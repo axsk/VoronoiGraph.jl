@@ -347,7 +347,7 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
     try
         i, t = nn(searcher.tree, r + u * (u' * (x0-r)), skip)
     catch
-        return [0, sig], Inf
+        return [0; sig], Inf
     end
 
     t == Inf && return [0; sig], Inf
