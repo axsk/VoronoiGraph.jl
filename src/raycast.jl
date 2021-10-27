@@ -14,35 +14,14 @@ function raycast(sig::Sigma, r, u, xs, searcher::SearchBruteforce)
     (tau, ts) = [0; sig], Inf
     x0 = xs[sig[1]]
 
-    #reltol = 1e-6
-
-    #tmin = abs(dot(u, r-x0) * reltol)
-    #tmin = norm(r-x0) * reltol
-    #tmin = 0
-    #tmin = 1e-8
-    #tmid = dot(u, x0-r)
-
     c = maximum(dot(xs[g], u) for g in sig)
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
-    #@show tmin = - sum(abs2, r .- x0) / (2 * u' * (r-x0))
 
     for i in 1:length(xs)
-        # i in sig && continue
         skip(i) && continue
         x = xs[i]
         t = (sum(abs2, r .- x) - sum(abs2, r .- x0)) / (2 * u' * (x-x0))
-        # if u'*(x-r) < 0
-        #     @show map(s->u'*(xs[s]-r), sig)
-        #     #continue
-        # end
-        # if t < tmid
-        #     #@show tmid
-        #     #@show dot(u, x-x0)
-        # end
-
-
-
         if 0 < t < ts
             (tau, ts) = vcat(sig, [i]), t
         end
@@ -148,19 +127,15 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
 
     x0 = xs[sig[1]]
 
-    #c = dot(x0, u)
     c = maximum(dot(xs[g], u) for g in sig)
-    #c = maximum(dists)
-    #@show c
 
     # only consider points on the right side of the hyperplane
-    #skip(i) = (u' * (xs[i]-x0) <= 0) || i ∈ sig
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
     # try catch workaround for https://github.com/KristofferC/NearestNeighbors.jl/issues/127
     local i, t
     try
-        i, t = nn(searcher.tree, r #= + u * (u' * (x0-r)) =#, skip)
+        i, t = nn(searcher.tree, r + u * (u' * (x0-r)), skip)
     catch
         return [0; sig], Inf
     end
@@ -206,8 +181,6 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCo
 
     if !(r1[1]==r2[1]==r3[1]==r4[1])
         @warn "raycast algorithms return different results" r1 r2 r3 r4 tuple(r...)
-        #x0 = xs[sig[1]]
-        #@show tmid = dot(u, x0-r)
     end
     return r4
 end
