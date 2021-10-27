@@ -28,14 +28,14 @@ function test_equidistance(verts, xs)
     return true
 end
 
-bigdata = [rand(2, 10000), rand(4,1000), rand(6,200)]
+bigdata = [rand(2, 10000), rand(4,1000), rand(6,200), rand(8,100)]
 smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
 
 @testset "VoronoiGraph.jl" begin
 
     @testset "Equidistance" begin
         for data in bigdata
-            verts, xs = voronoi(data)
+            @time verts, xs = voronoi(data)
             @test test_equidistance(verts, xs)
 
             vrand, xs = voronoi_random(data, 1000)
@@ -53,7 +53,7 @@ smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
         end
     end
 
-    @testset "Area / Volume" begin
+    @testset "Area computation" begin
         data = rand(2,1000)
 
         rect = Rectangle(Point2(-1000., -1000.), Point2(1000., 1000))
@@ -64,23 +64,26 @@ smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
         _, A = VoronoiGraph.area_volume(v, P)
 
         A = sort(A)
-        small = A .< 1
 
-        println("comparing areas on $(sum(small)) out of $(length(small)) cells")
+        # the larger areas lie at the boundary and are computed differently
+        small = A .< 1
+        #println("comparing areas on $(sum(small)) out of $(length(small)) cells")
 
         @test ≈(A[small], area[small], rtol=1e-8)
     end
 
     @testset "Monte Carlo Volumes" begin
-        function std_error_mc_volumes(n=20, d=2, mc=10000)
-            x = rand(d,n)
-            v, xs = voronoi(x)
-            A, V = area_volume(v, xs)
-            Am, Vm = mc_volumes(xs, mc)
-            std(filter(isfinite, (Am-A)./A))
-        end
+        x = rand(2,20)
+        v, xs = voronoi(x)
+        A, V = area_volume(v, xs)
 
-        @test std_error_mc_volumes() < 0.2
+        Am, Vm = mc_volumes(xs, 10_000)
+        err = std(filter(isfinite, (Am-A)./A))
+        @test err < 0.2
+
+        Am, Vm = mc_volumes(v, xs, 10_000)
+        err = std(filter(isfinite, (Am-A)./A))
+        @test err < 0.2
     end
 
     @testset "Plot recipe" begin

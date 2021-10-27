@@ -4,9 +4,7 @@
 # default raycast
 Raycast(xs) = SearchIncircleSkip(KDTree(xs))
 
-struct SearchBruteforce
-    tmin
-end
+struct SearchBruteforce end
 
 """ shooting a ray in the given direction, find the next connecting point.
 This is the bruteforce variant, using a linear search to find the closest point """
@@ -166,10 +164,10 @@ struct RaycastCompare
     timings
 end
 
-RaycastCompare(xs) = RaycastCompare(KDTree(xs), 100000, 1e-8, zeros(4))
+RaycastCompare(xs) = RaycastCompare(KDTree(xs), 1_000, 1e-8, zeros(4))
 
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCompare)
-    s1 = SearchBruteforce(searcher.eps)
+    s1 = SearchBruteforce()
     s2 = SearchBisection(searcher.tree, searcher.tmax, searcher.eps)
     s3 = SearchIncircle(searcher.tree, searcher.tmax)
     s4 = SearchIncircleSkip(searcher.tree)

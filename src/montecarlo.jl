@@ -36,9 +36,56 @@ function mc_volumes(xs::Points, nmc=1000)
     A, V
 end
 
+"""
+    mc_volumes(sig::Vertices, xs::Points, nmc=1000)
 
+In the case when the simplicial complex is already known this information can be used
+to speed up the Monte-Carlo sampling by restricting the search space
+"""
+function mc_volumes(σ::Vertices, xs, nmc=1000)
+    V = zeros(length(xs))
+    A = spzeros(length(xs), length(xs))
 
-function mc_integrate(f, i, xs::Vector, nmc=1000, nmc2=1000, searcher = SearchIncircle(KDTree(xs), 100))
+    searcher = SearchIncircle(KDTree(xs), 100)
+    neigh = neighbors(σ)
+
+    for i in 1:length(xs)
+        ix = [i; neigh[i]]
+        a, v = mc_volume(1, xs[ix], nmc, SearchBruteforce())
+        V[i] = v
+        A[ix, i] = a
+    end
+    #A = (A + A') / 2
+    A, V
+end
+
+"""
+    neighbors(sig::Vertices) --> Dict{Int, Vector{Int}}
+Compute the neighbors of all generators.
+"""
+neighbors(σ::Vertices) = neighbors(keys(σ))
+function neighbors(σ)
+    d = Dict{Int, Vector{Int}}()
+    for s in σ
+        for i in s
+            v = get!(d, i, Vector{Int}())
+            union!(v, setdiff(s, [i]))
+        end
+    end
+    return d
+end
+
+"""
+    mc_integrate(f::Function, i::Int, xs::Points, nmc=1000, nmc2=1000, searcher=Raycast(xs))
+Integrate function `f` over cell `i` and its boundary using `nmc` rays per cell and `nmc2` points per ray for the volume integral.
+
+# Returns:
+- `Vf::Real`: the volume integral of `f`
+- `Af::SparseVector`: Af[j] is the surface integral of `f` over the intersection between cells i and j.
+- `V::Real`: the volume of cell `i`
+- `A::SparseVector`: A[j] is the surface area of the intersection between cells i and j.
+"""
+function mc_integrate(f::Function, i::Int, xs::Vector, nmc=1000, nmc2=1000, searcher = Raycast(xs))
     x = xs[i]
     d = length(x)
 
