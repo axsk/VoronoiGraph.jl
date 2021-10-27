@@ -10,28 +10,46 @@ using VoronoiCells
 using VoronoiCells.GeometryBasics
 
 # nice to have if tests dont pass
-@show Random.seed!()
+seed = rand(UInt)
+@show seed
+Random.seed!(seed)
 
 # necessary condition for the voronoi diagram to be correct
 function test_equidistance(verts, xs)
     allsame(x) = all(y -> y ≈ first(x), x)
     for (sig, v) in verts
         dists = [norm(xs[s] - v) for s in sig]
-        !allsame(dists) && return false
+        relerr = maximum(abs, 1 .- dists ./ dists[1])
+        if relerr > 1e-5
+            @show dists
+            return false
+        end
     end
     return true
 end
 
+bigdata = [rand(2, 10000), rand(4,1000), rand(6,200)]
+smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
 
 @testset "VoronoiGraph.jl" begin
 
     @testset "Equidistance" begin
-        for (verts,xs) in [
-            voronoi(rand(2,100)),
-            voronoi(rand(3,100)),
-            voronoi_random(rand(6,100), 1000)]
-
+        for data in bigdata
+            verts, xs = voronoi(data)
             @test test_equidistance(verts, xs)
+
+            vrand, xs = voronoi_random(data, 1000)
+            @test test_equidistance(vrand, xs)
+
+            @test issubset(keys(vrand), keys(verts))
+        end
+    end
+
+    @testset "Raycast" begin
+        for data in smalldata
+            data = VoronoiGraph.vecvec(data)
+            search = VoronoiGraph.RaycastCompare(data)
+            @test_nowarn voronoi(data, search)
         end
     end
 

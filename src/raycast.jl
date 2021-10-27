@@ -2,7 +2,7 @@
 ## Implementations of different raycasting search algorithms
 
 # default raycast
-Raycast(xs) = RaycastCompare(KDTree(xs), 100000, 1e-8, zeros(4))
+Raycast(xs) = SearchIncircleSkip(KDTree(xs))
 
 struct SearchBruteforce
     tmin
@@ -166,6 +166,8 @@ struct RaycastCompare
     timings
 end
 
+RaycastCompare(xs) = RaycastCompare(KDTree(xs), 100000, 1e-8, zeros(4))
+
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCompare)
     s1 = SearchBruteforce(searcher.eps)
     s2 = SearchBisection(searcher.tree, searcher.tmax, searcher.eps)
@@ -179,7 +181,7 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCo
 
     searcher.timings .+= [t1, t2, t3, t4]
 
-    if !(r1[1]==r2[1]==r3[1]==r4[1])
+    if !(r1[1]==r2[1]==r3[1]==r4[1]) && r3[2] < searcher.tmax
         @warn "raycast algorithms return different results" r1 r2 r3 r4 tuple(r...)
     end
     return r4
