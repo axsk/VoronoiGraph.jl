@@ -17,8 +17,8 @@ end
 voronoi_random(x, args...; kwargs...) = voronoi_random(vecvec(x), args...; kwargs...)
 
 """ construct a (partial) voronoi diagram from `x` through a random walk """
-function voronoi_random(xs::Points, iter=1000; tmax=1000, maxstuck=typemax(Int))
-    searcher = RaycastIncircle(KDTree(xs), tmax)
+function voronoi_random(xs::Points, iter=1000; maxstuck=typemax(Int))
+    searcher = Raycast(xs)
     sig, r = descent(xs, searcher)
     verts = walk(sig, r, iter, xs, searcher, maxstuck)
     return verts::Vertices, xs
