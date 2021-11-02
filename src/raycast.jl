@@ -2,13 +2,13 @@
 ## Implementations of different raycasting search algorithms
 
 # default raycast
-Raycast(xs) = SearchIncircleSkip(KDTree(xs))
+Raycast(xs) = RaycastIncircleSkip(KDTree(xs))
 
-struct SearchBruteforce end
+struct RaycastBruteforce end
 
 """ shooting a ray in the given direction, find the next connecting point.
 This is the bruteforce variant, using a linear search to find the closest point """
-function raycast(sig::Sigma, r, u, xs, searcher::SearchBruteforce)
+function raycast(sig::Sigma, r, u, xs, searcher::RaycastBruteforce)
     (tau, ts) = [0; sig], Inf
     x0 = xs[sig[1]]
 
@@ -29,7 +29,7 @@ function raycast(sig::Sigma, r, u, xs, searcher::SearchBruteforce)
 end
 
 
-struct SearchBisection
+struct RaycastBisection
     tree::KDTree
     tmax
     eps::Float64
@@ -37,7 +37,7 @@ end
 
 """ shooting a ray in the given direction, find the next connecting point.
 This variant (by Poliaski, Pokorny) uses a binary search """
-function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchBisection)
+function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastBisection)
     tau, tl, tr = [], 0, searcher.tmax
     x0 = xs[sig[1]]
 
@@ -66,14 +66,14 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchBis
 end
 
 
-struct SearchIncircle
+struct RaycastIncircle
     tree::KDTree
     tmax::Float64
 end
 
 """ Shooting a ray in the given direction, find the next connecting point.
 This variant uses an iterative NN search """
-function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchIncircle)
+function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIncircle)
     i = 0
     t = 1
     x0 = xs[sig[1]]
@@ -117,11 +117,11 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchInc
 end
 
 
-struct SearchIncircleSkip
+struct RaycastIncircleSkip
     tree::KDTree
 end
 
-function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::SearchIncircleSkip)
+function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIncircleSkip)
 
     x0 = xs[sig[1]]
 
@@ -167,10 +167,10 @@ end
 RaycastCompare(xs) = RaycastCompare(KDTree(xs), 1_000, 1e-8, zeros(4))
 
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCompare)
-    s1 = SearchBruteforce()
-    s2 = SearchBisection(searcher.tree, searcher.tmax, searcher.eps)
-    s3 = SearchIncircle(searcher.tree, searcher.tmax)
-    s4 = SearchIncircleSkip(searcher.tree)
+    s1 = RaycastBruteforce()
+    s2 = RaycastBisection(searcher.tree, searcher.tmax, searcher.eps)
+    s3 = RaycastIncircle(searcher.tree, searcher.tmax)
+    s4 = RaycastIncircleSkip(searcher.tree)
 
     t1 = @elapsed r1 = raycast(sig, r, u, xs, s1)
     t2 = @elapsed r2 = raycast(sig, r, u, xs, s2)
