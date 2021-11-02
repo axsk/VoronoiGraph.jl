@@ -45,7 +45,7 @@ function transformation(A, B)
 end
 
 """ build the connectivity matrix for the SQRA from adjacency and boundary information """
-function area_volume(vertices, P::AbstractVector)
+function volumes(vertices, P::AbstractVector)
     dim = length(P[1])
     conns = adjacency(vertices)
 

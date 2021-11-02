@@ -14,6 +14,8 @@ include("volume.jl")
 include("plot.jl")
 include("montecarlo.jl")
 
-export voronoi, voronoi_random, area_volume, adjacency, mc_volumes
+export voronoi, voronoi_random
+export volumes
+export mc_volumes, mc_integrate
 
 end

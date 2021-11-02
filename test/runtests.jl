@@ -61,7 +61,7 @@ smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
         area = voronoiarea(tess) |> sort
 
         v, P = VoronoiGraph.voronoi(data)
-        _, A = VoronoiGraph.area_volume(v, P)
+        _, A = VoronoiGraph.volumes(v, P)
 
         A = sort(A)
 
@@ -75,7 +75,7 @@ smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
     @testset "Monte Carlo Volumes" begin
         x = rand(2,20)
         v, xs = voronoi(x)
-        A, V = area_volume(v, xs)
+        A, V = volumes(v, xs)  # exact reference volumes
 
         Am, Vm = mc_volumes(xs, 10_000)
         err = std(filter(isfinite, (Am-A)./A))
@@ -107,6 +107,6 @@ function benchmark(n=1000)
 
     v, P = VoronoiGraph.voronoi(data)
     @show @benchmark VoronoiGraph.voronoi($data)
-    @show @benchmark VoronoiGraph.area_volume($v, $P)
+    @show @benchmark VoronoiGraph.volumes($v, $P)
     return nothing
 end
