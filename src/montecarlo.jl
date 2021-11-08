@@ -42,7 +42,7 @@ end
 In the case when the simplicial complex is already known this information can be used
 to speed up the Monte-Carlo sampling by restricting the search space
 """
-function mc_volumes(σ::Vertices, xs, nmc=1000)
+function mc_volumes(σ::Vertices, xs::Points, nmc=1000)
     V = zeros(length(xs))
     A = spzeros(length(xs), length(xs))
 

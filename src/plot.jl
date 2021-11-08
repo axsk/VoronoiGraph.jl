@@ -2,8 +2,12 @@
 
 @recipe function f(p::VoronoiPlot; fill_z=nothing)
 	v, P = p.args
-	fs = faces(v, P)
+    fs = faces(v, P)
+    xs = reduce(hcat, P)
+    lims = extrema(xs, dims=2)
     label --> ""
+    xlims --> lims[1] .* 1.1
+    ylims --> lims[2] .* 1.1
 
 	for (i, f) in enumerate(fs)
 		@series begin
@@ -17,6 +21,10 @@
 			end
 		end
 	end
+    @series begin
+        seriestype := :scatter
+        xs[1,:], xs[2,:]
+    end
 end
 
 function faces(vertices, P::AbstractVector)
