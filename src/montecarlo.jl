@@ -69,8 +69,12 @@ function neighbors(σ)
     for s in σ
         for i in s
             v = get!(d, i, Vector{Int}())
-            union!(v, setdiff(s, [i]))
+            append!(v, s)
         end
+    end
+    for i in keys(d)
+        unique!(d[i])
+        filter!(x->x != i, d[i])
     end
     return d
 end
