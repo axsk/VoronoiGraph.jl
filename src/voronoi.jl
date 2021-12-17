@@ -10,8 +10,8 @@ voronoi(x; kwargs...) = voronoi(vecvec(x); kwargs...)
 """ construct the voronoi diagram from `x` through breadth-first search """
 function voronoi(xs::Points, searcher = Raycast(xs))
     sig, r = descent(xs, searcher)
-    verts = explore(sig, r, xs, searcher)
-    return verts::Vertices, xs
+    verts, boundary = explore(sig, r, xs, searcher)
+    return verts::Vertices, xs, boundary
 end
 
 voronoi_random(x, args...; kwargs...) = voronoi_random(vecvec(x), args...; kwargs...)
@@ -63,7 +63,7 @@ function walk(sig::Sigma, r::Point, nsteps::Int, xs::Points, searcher, maxstuck:
         nonew += 1
         progmax = max(progmax, nonew)
         ProgressMeter.update!(prog, progmax)
-        sig, r = walkray(sig, r, xs, searcher)
+        sig, r = walkray_random_noinf(sig, r, xs, searcher)
         get!(verts, sig) do
             nonew = 0
             return r
@@ -74,8 +74,17 @@ function walk(sig::Sigma, r::Point, nsteps::Int, xs::Points, searcher, maxstuck:
     return verts
 end
 
-""" starting at vertex (v,r), return a random adjacent vertex """
-walkray(sig, r, xs, searcher) = walkray(sig, r, xs, searcher, rand(1:length(sig)))
+""" starting at vertex (v,r), return a random adjacent vertex
+
+If the resulting vertex would lie at infinity, return the input vertex """
+function walk_random_noinf(sig, r, xs, searcher)
+    sig′, r′ = walkray(sig, r, xs, searcher, rand(1:length(sig)))
+    if 0 in sig′
+        return sig, r
+    else
+        return sig′, r′
+    end
+end
 
 """ find the vertex connected to `v` by moving away from its `i`-th generator """
 function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
@@ -84,19 +93,20 @@ function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
     if (u' * (xs[sig[i]] - xs[sig_del[1]])) > 0
         u = -u
     end
-    sig_new, t = raycast(sig_del, r, u, xs, searcher)
+    sig′, t = raycast(sig_del, r, u, xs, searcher)
     if t < Inf
-        sig = sig_new
+        sig = sig′
         r = r + t*u
     end
     return sig, r
 end
 
 """ BFS of vertices starting from `S0` """
-function explore(sig, r, xs::Points, searcher) :: Vertices
+function explore(sig, r, xs::Points, searcher) # :: Vertices
     verts = Dict(sig=>r)
     queue = copy(verts)
     edgecount = Dict{Vector{Int64}, Int}()
+    boundary = []
 
     cache = true  # Caches if both points along an edge are known. Trades memory for runtime.
     hit = 0
@@ -113,19 +123,20 @@ function explore(sig, r, xs::Points, searcher) :: Vertices
                 continue
             end
 
-            sig_new, r_new = walkray(sig, r, xs, searcher, i)
+            sig′, r′ = walkray(sig, r, xs, searcher, i)
 
-            if sig_new == sig
+            if sig′ == sig
+                push!(boundary, sig)
                 unbounded += 1
                 continue
             end
 
-            if !haskey(verts, sig_new)
-                push!(queue, sig_new => r_new)
-                push!(verts, sig_new => r_new)
+            if !haskey(verts, sig′)
+                push!(queue, sig′ => r′)
+                push!(verts, sig′ => r′)
                 if cache
-                    for j in 1:length(sig_new)
-                        edge = deleteat(sig_new, j)
+                    for j in 1:length(sig′)
+                        edge = deleteat(sig′, j)
                         edgecount[edge] = get(edgecount, edge, 0) + 1
                     end
                 end
@@ -138,7 +149,7 @@ function explore(sig, r, xs::Points, searcher) :: Vertices
     end
 
     #@show hit, miss, new, unbounded
-    return verts
+    return verts, boundary
 end
 
 deleteat(sig, i) = deleteat!(copy(sig), i)
