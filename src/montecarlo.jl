@@ -131,3 +131,36 @@ function mc_integrate(f::Function, i::Int, xs::Vector, nmc=1000, nmc2=1000, sear
 
     y, δy, V, A
 end
+
+function mc_integrate(f, σ::Vertices, xs::Points, nmc, nmc2)
+    n = length(xs)
+    ys = zeros(n)
+    ∂ys = zeros(n)
+
+    neigh = neighbors(σ)
+
+    for i in 1:n
+        ix = [i; neigh[i]]
+        y, ∂y, V, A = mc_integrate(f, 1, xs[ix], nmc, nmc2, RaycastBruteforce())
+        ys[i] = y
+        ∂ys[i] = sum(∂y)
+    end
+    return ys, ∂ys
+end
+
+# MC integration using f(x, i) function which is also passed the index of the cell
+function mc_integrate_i(f, σ::Vertices, xs::Points, nmc, nmc2)
+    n = length(xs)
+    ys = zeros(n)
+    ∂ys = zeros(n)
+
+    neigh = neighbors(σ)
+
+    for i in 1:n
+        ix = [i; neigh[i]]
+        y, ∂y, V, A = mc_integrate(x->f(x, i), 1, xs[ix], nmc, nmc2, RaycastBruteforce())
+        ys[i] = y
+        ∂ys[i] = sum(∂y)
+    end
+    return ys, ∂ys
+end
