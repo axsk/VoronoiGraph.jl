@@ -77,7 +77,7 @@ end
 """ starting at vertex (v,r), return a random adjacent vertex
 
 If the resulting vertex would lie at infinity, return the input vertex """
-function walk_random_noinf(sig, r, xs, searcher)
+function walkray_random_noinf(sig, r, xs, searcher)
     sig′, r′ = walkray(sig, r, xs, searcher, rand(1:length(sig)))
     if 0 in sig′
         return sig, r
