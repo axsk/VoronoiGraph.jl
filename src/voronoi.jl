@@ -63,7 +63,9 @@ function walk(sig::Sigma, r::Point, nsteps::Int, xs::Points, searcher, maxstuck:
         nonew += 1
         progmax = max(progmax, nonew)
         ProgressMeter.update!(prog, progmax)
-        sig, r = walkray_random_noinf(sig, r, xs, searcher)
+        randdir = rand(1:length(sig))
+        sig, r = walkray(sig, r, xs, searcher, randdir)
+        r == Inf && continue  # we encountered an infinite ray
         get!(verts, sig) do
             nonew = 0
             return r
@@ -74,17 +76,6 @@ function walk(sig::Sigma, r::Point, nsteps::Int, xs::Points, searcher, maxstuck:
     return verts
 end
 
-""" starting at vertex (v,r), return a random adjacent vertex
-
-If the resulting vertex would lie at infinity, return the input vertex """
-function walkray_random_noinf(sig, r, xs, searcher)
-    sig′, r′ = walkray(sig, r, xs, searcher, rand(1:length(sig)))
-    if 0 in sig′
-        return sig, r
-    else
-        return sig′, r′
-    end
-end
 
 """ find the vertex connected to `v` by moving away from its `i`-th generator """
 function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
