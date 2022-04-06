@@ -86,10 +86,11 @@ function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
     end
     sig′, t = raycast(sig_del, r, u, xs, searcher)
     if t < Inf
-        sig = sig′
-        r = r + t*u
+        r′ = r + t*u
+        return sig′, r′
+    else
+        return sig, r  # if the vertex has an unbounded ray, return the same vertex
     end
-    return sig, r
 end
 
 """ BFS of vertices starting from `S0` """
