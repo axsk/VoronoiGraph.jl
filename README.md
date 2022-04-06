@@ -1,8 +1,9 @@
 # VoronoiGraph
-
+[![DOI](https://zenodo.org/badge/417525067.svg)](https://zenodo.org/badge/latestdoi/417525067)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://axsk.github.io/VoronoiGraph.jl/dev)
 [![Build Status](https://github.com/axsk/VoronoiGraph.jl/workflows/CI/badge.svg)](https://github.com/axsk/VoronoiGraph.jl/actions)
 [![codecov](https://codecov.io/gh/axsk/VoronoiGraph.jl/branch/main/graph/badge.svg?token=OYHZKYOE2H)](https://codecov.io/gh/axsk/VoronoiGraph.jl)
+
 
 This Package implements a variation of the Voronoi Graph Traversal algorithm by Polianskii and Pokorny [\[1\]](https://dl.acm.org/doi/10.1145/3394486.3403266).
 It constructs a [Voronoi Diagram](https://en.wikipedia.org/wiki/Voronoi_diagram) from a set of points by performing a random walk on the graph of the vertices of the diagram.
