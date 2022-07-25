@@ -6,6 +6,9 @@ It works by constructing a polytope from halfspaces between the generators of th
 vertices. We use an affine transformation to get rid of the dimension in direction g1->g2
 """
 function boundary_area(g1::Int, g2::Int, vertices::AbstractVector{<:Sigma}, generators)
+
+    length(generators[1]) == 1 && return 1
+
     A = generators[g1]
     B = generators[g2]
     transform = transformation(A, B)
