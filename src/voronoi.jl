@@ -10,8 +10,8 @@ voronoi(x; kwargs...) = voronoi(vecvec(x); kwargs...)
 """ construct the voronoi diagram from `x` through breadth-first search """
 function voronoi(xs::Points, searcher = Raycast(xs))
     sig, r = descent(xs, searcher)
-    verts, boundary = explore(sig, r, xs, searcher)
-    return verts::Vertices, xs, boundary
+    verts, rays = explore(sig, r, xs, searcher)
+    return verts::Vertices, xs, rays
 end
 
 voronoi_random(x, args...; kwargs...) = voronoi_random(vecvec(x), args...; kwargs...)
@@ -98,7 +98,7 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
     verts = Dict(sig=>r)
     queue = copy(verts)
     edgecount = Dict{Vector{Int64}, Int}()
-    boundary = []
+    rays = Pair{Vector{Int64}, Int}[]
 
     cache = true  # Caches if both points along an edge are known. Trades memory for runtime.
     hit = 0
@@ -118,7 +118,7 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
             sig′, r′ = walkray(sig, r, xs, searcher, i)
 
             if sig′ == sig
-                push!(boundary, sig)
+                push!(rays, sig => i)
                 unbounded += 1
                 continue
             end
@@ -141,7 +141,7 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
     end
 
     #@show hit, miss, new, unbounded
-    return verts, boundary
+    return verts, rays
 end
 
 deleteat(sig, i) = deleteat!(copy(sig), i)
