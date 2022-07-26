@@ -29,8 +29,8 @@ function raycast(sig::Sigma, r, u, xs, searcher::RaycastBruteforce)
 end
 
 
-struct RaycastBisection
-    tree::KDTree
+struct RaycastBisection{T}
+    tree::T
     tmax
     eps::Float64
 end
@@ -66,8 +66,8 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastBi
 end
 
 
-struct RaycastIncircle
-    tree::KDTree
+struct RaycastIncircle{T}
+    tree::T
     tmax::Float64
 end
 
@@ -117,8 +117,8 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
 end
 
 
-struct RaycastIncircleSkip
-    tree::KDTree
+struct RaycastIncircleSkip{T}
+    tree::T
 end
 
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIncircleSkip)
