@@ -126,24 +126,32 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     x0 = xs[sig[1]]
 
     c = maximum(dot(xs[g], u) for g in sig)
+    #u = convert(typeof(r), u)
 
     # only consider points on the right side of the hyperplane
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
     # try catch workaround for https://github.com/KristofferC/NearestNeighbors.jl/issues/127
     local i, t
-    try
-        i, t = nn(searcher.tree, r + u * (u' * (x0-r)), skip)
-    catch
+
+    candidate = r + u * (u' * (x0-r))
+    is, ts = knn(searcher.tree, candidate, 1, false, skip)
+
+    if length(is) == 0  # no point was found
         return [0; sig], Inf
     end
+    i = is[1]
+    t = ts[1]
+
+    # I had this other check for no point was found
+    # I dont think it can happen anymore (due to changes in nn) but I leave it for now
     t == Inf && return [0; sig], Inf
 
     # sucessively reduce incircles unless nothing new is found
     while true
         x = xs[i]
         t = (sum(abs2, r - x) - sum(abs2, r - x0)) / (2 * u' * (x-x0))
-        j, _ = nn(searcher.tree, r+t*u)
+        j = nn(searcher.tree, r+t*u)[1]
         if j in sig || j == i
             break
         else
