@@ -172,7 +172,7 @@ struct RaycastCompare
     timings
 end
 
-RaycastCompare(xs) = RaycastCompare(KDTree(xs), 1_000, 1e-8, zeros(4))
+RaycastCompare(xs) = RaycastCompare(KDTree(xs), 1_000., 1e-8, zeros(4))
 
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastCompare)
     s1 = RaycastBruteforce()
