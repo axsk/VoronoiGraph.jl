@@ -48,6 +48,7 @@ function descent(xs::Points, searcher, start = 1) :: Vertex
         r = r + t*u
     end
 
+    sig = SVector{dim(xs)+1}(sig)
     return (sig, r)
 end
 
@@ -97,7 +98,7 @@ end
 function explore(sig, r, xs::Points, searcher) # :: Vertices
     verts = Dict(sig=>r)
     queue = copy(verts)
-    edgecount = Dict{Vector{Int64}, Int}()
+    edgecount = Dict{SVector{dim(xs), Int64}, Int}()
     rays = Pair{Vector{Int64}, Int}[]
 
     cache = true  # Caches if both points along an edge are known. Trades memory for runtime.
@@ -144,7 +145,9 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
     return verts, rays
 end
 
-deleteat(sig, i) = deleteat!(copy(sig), i)
+dim(xs::Points) = length(xs[1])
+deleteat(sig::Vector, i) = deleteat!(copy(sig), i)
+deleteat(x,y) = StaticArrays.deleteat(x,y)
 
 
 """ generate a random ray orthogonal to the subspace spanned by the given points """
