@@ -97,8 +97,9 @@ end
 """ BFS of vertices starting from `S0` """
 function explore(sig, r, xs::Points, searcher) # :: Vertices
     verts = Dict(sig=>r)
-    queue = copy(verts)
+    queue = [sig=>r]
     edgecount = Dict{SVector{dim(xs), Int64}, Int}()
+    sizehint!(edgecount, 400_000)  # TODO: tweak this by some heurisitic
     rays = Pair{Vector{Int64}, Int}[]
 
     cache = true  # Caches if both points along an edge are known. Trades memory for runtime.
