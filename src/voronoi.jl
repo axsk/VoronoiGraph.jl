@@ -4,6 +4,7 @@ const Sigma = AbstractVector{<:Integer}  # Encoded the vertex by the ids of its 
 const Vertex = Tuple{<:Sigma, <: Point}
 const Vertices = Dict{<:Sigma, <:Point}
 
+dim(xs::Points) = length(xs[1])
 
 voronoi(x; kwargs...) = voronoi(vecvec(x); kwargs...)
 
@@ -81,10 +82,7 @@ end
 """ find the vertex connected to `v` by moving away from its `i`-th generator """
 function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
     sig_del = deleteat(sig, i)
-    u = randray(xs[sig_del])
-    if (u' * (xs[sig[i]] - xs[sig_del[1]])) > 0
-        u = -u
-    end
+    u = u_default(sig, xs, i)
     sig′, t = raycast(sig_del, r, u, xs, searcher)
     if t < Inf
         r′ = r + t*u
@@ -92,6 +90,62 @@ function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
     else
         return sig, r  # if the vertex has an unbounded ray, return the same vertex
     end
+end
+
+u_default = u_qr
+
+function u_compare(sig, xs, i)
+    u1 = u_randray(sig, xs, i)
+    u2 = u_qr(sig, xs, i)
+    #u3 = u_qr_short(deleteat(sig, i), xs, sig[i])
+    u3=u2
+    if !(isapprox(u1, u2) && isapprox(u1, u2))
+        @warn "Not approx" u1 u2 u3
+    end
+    return u1
+end
+
+function u_randray(sig, xs, i)
+    sig_del = deleteat(sig, i)
+    u = randray_modified(xs[sig_del])
+    if (u' * (xs[sig[i]] - xs[sig_del[1]])) > 0
+        u = -u
+    end
+    return u
+end
+
+# replace gram-schmidt of randray by qr
+function u_qr(sig, xs, i)
+    n = length(sig)
+    d = length(xs[1])
+    X = MMatrix{d, n-1, eltype(xs[1])}(undef)
+    for j in 1:i-1
+        X[:, j] = xs[sig[j]]
+    end
+    for j in i:n-1
+        X[:, j] = xs[sig[j+1]]
+    end
+    origin = X[:, end]
+    X[:, end] = xs[sig[i]]
+    X .-= origin
+    X = SMatrix(X)
+    Q, R = qr(X)
+    u = -Q[:,end]  * sign(R[end,end])
+    return u
+end
+
+# same as u_qr, shorter and slower
+function u_qr_short(sig_del, xs, opposing)
+    sig = vcat(sig_del[2:end], [opposing])
+    origin = xs[sig_del[1]]
+    X = mapreduce(i->xs[i] - origin,hcat, sig)
+    X = Array(X)
+    #@show t
+    q = qr(X)
+    u = q.Q[:,end]
+    u *= -sign(q.R[end,end])
+
+    return u
 end
 
 """ BFS of vertices starting from `S0` """
@@ -140,17 +194,14 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
                 miss += 1
             end
         end
-
     end
 
     #@show hit, miss, new, unbounded
     return verts, rays
 end
 
-dim(xs::Points) = length(xs[1])
 deleteat(sig::Vector, i) = deleteat!(copy(sig), i)
 deleteat(x,y) = StaticArrays.deleteat(x,y)
-
 
 """ generate a random ray orthogonal to the subspace spanned by the given points """
 function randray(xs::Points)
@@ -172,5 +223,26 @@ function randray(xs::Points)
         u = u - dot(u, v[i]) * v[i]
     end
     u = normalize(u)
+    return u
+end
+
+""" generate a random ray orthogonal to the subspace spanned by the given points """
+function randray_modified(xs::Points)
+    k = length(xs)
+    v = collect(xs)
+    for i in 1:k
+        v[i] -= v[k] # subtract origin
+    end
+    v[k] = randn(dim(xs))
+
+    # modified Gram-Schmidt (for better stability)
+    for i in 1:k
+        v[i] = normalize(v[i])
+        for j in i+1:k
+            v[j] -= dot(v[i], v[j]) * v[i]
+        end
+    end
+
+    u = v[k]
     return u
 end

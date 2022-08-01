@@ -131,9 +131,6 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     # only consider points on the right side of the hyperplane
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
-    # try catch workaround for https://github.com/KristofferC/NearestNeighbors.jl/issues/127
-    local i, t
-
     candidate = r + u * (u' * (x0-r))
     is, ts = knn(searcher.tree, candidate, 1, false, skip)
 
@@ -151,10 +148,15 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     while true
         x = xs[i]
         t = (sum(abs2, r - x) - sum(abs2, r - x0)) / (2 * u' * (x-x0))
-        j = nn(searcher.tree, r+t*u)[1]
+        candidate = r + t*u
+        j, d = nn(searcher.tree, candidate)
+
         if j in sig || j == i
             break
+
         else
+            dold = sqrt(sum(abs2, x0-candidate))
+            isapprox(d, dold) && @warn "degenerate $sig $i ($d $dold)"
             i = j
         end
     end
