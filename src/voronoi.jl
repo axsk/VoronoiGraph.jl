@@ -108,6 +108,7 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
     unbounded = 0
 
     while length(queue) > 0
+        yield()
         (sig,r) = pop!(queue)
         for i in 1:length(sig)
 
