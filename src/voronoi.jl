@@ -92,7 +92,7 @@ function walkray(sig::Sigma, r::Point, xs::Points, searcher, i)
     end
 end
 
-u_default = u_qr
+
 
 function u_compare(sig, xs, i)
     u1 = u_randray(sig, xs, i)
@@ -199,6 +199,8 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
     #@show hit, miss, new, unbounded
     return verts, rays
 end
+
+u_default = u_qr
 
 deleteat(sig::Vector, i) = deleteat!(copy(sig), i)
 deleteat(x,y) = StaticArrays.deleteat(x,y)
