@@ -153,7 +153,8 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
     verts = Dict(sig=>r)
     queue = [sig=>r]
     edgecount = Dict{SVector{dim(xs), Int64}, Int}()
-    sizehint!(edgecount, 400_000)  # TODO: tweak this by some heurisitic
+    sizehint!(edgecount, round(Int, expected_edges(xs)))
+    sizehint!(verts, round(Int, expected_vertices(xs)))
     rays = Pair{Vector{Int64}, Int}[]
 
     cache = true  # Caches if both points along an edge are known. Trades memory for runtime.
@@ -195,7 +196,6 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
             end
         end
     end
-
     #@show hit, miss, new, unbounded
     return verts, rays
 end
@@ -247,4 +247,38 @@ function randray_modified(xs::Points)
 
     u = v[k]
     return u
+end
+
+"""
+vertexheuristic(d, n)
+
+expected number of vertices for `n` points in `d` dimensions
+c.f. [Dwyer, The expected number of k-faces of a Voronoi Diagram (1993)] """
+function expected_vertices(d, n)
+
+    # from the previous work, only good for d>5
+    # 2^((d+1)/2) * exp(1/4) * pi^((d-1)/2) * d^((d-2)/2) / (d+1) * n
+
+    # lower and upperbound coincide for k==d
+    lowerbound(d, d) * n
+end
+
+function expected_edges(d, n)
+    expected_vertices(d, n) * (d+1) / 2
+end
+
+expected_edges(xs::Points) = expected_edges(dim(xs), length(xs))
+expected_vertices(xs::Points) = expected_vertices(dim(xs), length(xs))
+
+# Theorem 1
+# For fixed k and d as n grow without bound, EF(k,d)  ̃ C(k,d)n with C(k,d) ≥ lowerbound(k,d)
+function lowerbound(k, d)
+    2 * pi^(k/2) * d^(k-1) / (k*(k+1)) * beta(d*k/2, (d-k+1)/2) ^ (-1) * (gamma(d/2) / gamma((d+1)/2))^k
+end
+
+# Theorem 1
+# For fixed k and d as n grow without bound, EF(k,d)  ̃ C(k,d)n with C(k,d) ≤ upperbound(k,d)
+function upperbound(k, d)
+    2 * d^(d-2) * pi^((d-1)/2) * gamma((d^2+1)/2) * gamma(d/2)^d /
+    ((d+1) * (d+2) * gamma(d^2/2) * gamma((d+1)/2)^d) * binomial(d+2, k+1)
 end
