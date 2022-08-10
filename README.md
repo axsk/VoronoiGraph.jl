@@ -26,7 +26,7 @@ julia> v, P = voronoi_random(data, 1000)  # perform 1000 iterations of the rando
 
 ## Area / Volume computation
 ```julia
-julia> A,V = volumes(v,P)
+julia> A,V = volumes(v, P)
 ```
 computes the (deterministic) areas of the boundaries of neighbouring cells (as sparse array `A`)
 as well as the volume of the cells themselves (vector `V`) by falling back onto the Polyhedra.jl volume computation.
@@ -35,17 +35,17 @@ as well as the volume of the cells themselves (vector `V`) by falling back onto 
 ## Monte Carlo
 Combining the raycasting approach with Monte Carlo estimates we can approximate the areas and volumes effectively:
 ```julia
-julia> A, V = mc_volumes(data, 1000)  # cast 1000 Monte Carlo rays per cell
+julia> A, V = mc_volumes(P, 1000)  # cast 1000 Monte Carlo rays per cell
 ```
 
 If the simplicial complex of vertices is already known we can speed up the process:
 ```julia
-julia> A, V = mc_volumes(v, data, 1000)  # use the neighbourhood infromation contained in v
+julia> A, V = mc_volumes(v, P, 1000)  # use the neighbourhood infromation contained in v
 ```
 
 We furthermore can integrate any function `f` over a cell `i` and its boundaries:
 ```julia
-julia> y, δy, V, A = mc_integrate(x->x^2, 1, data, 100, 10) # integrate cell 1 with 100 boundary and 100*10 volume samples
+julia> y, δy, V, A = mc_integrate(x->x^2, 1, P, 100, 10) # integrate cell 1 with 100 boundary and 100*10 volume samples
 ```
 Here `y` and the vector `δy` contain the integrals over the cell and its boundaries. V and A get computed as a byproduct.
 
