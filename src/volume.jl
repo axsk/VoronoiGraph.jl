@@ -125,3 +125,33 @@ function boundary_area_vrep(g1::Int, g2::Int, inds::AbstractVector{<:Sigma}, ver
     A = dim * vol / h
     return A, h, vol
 end
+
+## lets try computing the volumes ourselves, following martins idea of simplex decomposition.
+# We subdivide each delauney simplex into the subsimplices with the central voronoi vertex
+# instead of each of the voronoi generators as subsimplex-vertex. (1)
+# This smaller simplex contributes equal volume to all adjacent cells. (2)
+# We further can compute the areas by means of the pyramid formula
+
+function myvolumes(vertices::Vertices, P::Points)
+    dim = length(P[1])
+
+    As = Float64[]
+    Vs = zeros(length(P))
+
+    for v in vertices
+        σ, x = v
+        X = reduce(hcat, P[σ]) .- x
+        for i in 1:dim+1
+            mask = 1:dim+1 .!= i
+            A = X[:, mask]
+            #if dot(X[:,i], A[:,1])  # vertex i
+            V = abs(det(A)) / factorial(dim)  # (1)
+            Vs[σ[mask]] .+= V / dim  # (2)
+        end
+    end
+    return Vs
+end
+
+# this does not work: sometimes the voronoi vertex does not lie inside but outside of
+# its generator's simplex. this leads to missattribution of volumes.
+# seems not so easy to handle as its nonlocal (to the vertex) information
