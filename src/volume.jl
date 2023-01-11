@@ -132,6 +132,8 @@ end
 # This smaller simplex contributes equal volume to all adjacent cells. (2)
 # We further can compute the areas by means of the pyramid formula
 
+# this seems to work in two dimensions, but breaks for dim > 2
+
 function myvolumes(vertices::Vertices, P::Points)
     dim = length(P[1])
 
@@ -140,18 +142,21 @@ function myvolumes(vertices::Vertices, P::Points)
 
     for v in vertices
         σ, x = v
-        X = reduce(hcat, P[σ]) .- x
+        X = reduce(hcat, P[σ])
         for i in 1:dim+1
             mask = 1:dim+1 .!= i
-            A = X[:, mask]
-            #if dot(X[:,i], A[:,1])  # vertex i
+            A = X[:, mask] .- x
             V = abs(det(A)) / factorial(dim)  # (1)
+
+            # check whether vertex and left out generator lie
+            # on opposing sites of the other generators
+            # if so remove volume as it gets accounted for by the other side
+            Aopp = X[:, mask] .- X[:, i]
+            flip = sign(det(A) * det(Aopp))
+            V *= flip
             Vs[σ[mask]] .+= V / dim  # (2)
         end
     end
+    # TODO: return `inf` for unbounded volumes
     return Vs
 end
-
-# this does not work: sometimes the voronoi vertex does not lie inside but outside of
-# its generator's simplex. this leads to missattribution of volumes.
-# seems not so easy to handle as its nonlocal (to the vertex) information
