@@ -1,7 +1,7 @@
 name = "VoronoiGraph"
 uuid = "e5f3e3e8-00d7-4f74-8011-648b521326aa"
 authors = ["Sikorski <sikorski@zib.de> and contributors"]
-version = "0.2.1"
+version = "0.2.2"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
