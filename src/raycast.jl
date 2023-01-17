@@ -121,6 +121,22 @@ struct RaycastIncircleSkip{T}
     tree::T
 end
 
+"""
+raycast(sig::Sigma, r::Point, u::Point, xs::Points, seacher::RaycastIncircleSkip)
+
+Return `(tau, t)` where `tau = [sig..., i]` are the new generators
+and `t` the distance to walk from `r` to find the new representative.
+
+`::RaycastIncircleSkip` uses the nearest-neighbours skip predicate
+to find the initial candidate on the right half plane.
+Resumes with successive incircle searches until convergence
+(just as in ``::RaycastIncircle`).
+
+Q: Why is this routine split in these two parts
+instead of only iterating on the right half plane?
+A: Maybe this was faster, using skip only in the first iteration (but is this safe?)
+"""
+
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIncircleSkip)
 
     x0 = xs[sig[1]]
@@ -131,7 +147,18 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     # only consider points on the right side of the hyperplane
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
+    # shift candidate onto the plane spanned by the generators
     candidate = r + u * (u' * (x0-r))
+
+    # compute heuristic t assuming the resulting delauney simplex was regular
+    if length(sig) > 1
+        n = length(sig)
+        radius = norm(candidate-x0)
+        #radius = sum(norm(candidate-xs[s]) for s in sig) / n  # better but slower
+        t = radius / sqrt((n+1)*(n-1))
+        candidate += t * u
+    end
+
     is, ts = knn(searcher.tree, candidate, 1, false, skip)
 
     if length(is) == 0  # no point was found
@@ -142,7 +169,10 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
 
     # I had this other check for no point was found
     # I dont think it can happen anymore (due to changes in nn) but I leave it for now
-    t == Inf && return [0; sig], Inf
+    if t == Inf
+        @warn "this should not happen"
+        return [0; sig], Inf
+    end
 
     # sucessively reduce incircles unless nothing new is found
     while true
@@ -153,12 +183,12 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
 
         if j in sig || j == i
             break
-
-        else
-            dold = sqrt(sum(abs2, x0-candidate))
-            isapprox(d, dold) && @warn "degenerate $sig $i ($d $dold)"
-            i = j
         end
+
+        dold = sqrt(sum(abs2, x0-candidate))
+        isapprox(d, dold) && @warn "degenerate vertex at $sig + [$i] ($d $dold)"
+
+        i = j
     end
 
     tau = sort([i; sig])
