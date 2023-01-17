@@ -134,23 +134,22 @@ Resumes with successive incircle searches until convergence
 
 Q: Why is this routine split in these two parts
 instead of only iterating on the right half plane?
-A: Maybe this was faster, using skip only in the first iteration (but is this safe?)
+A: The first might find no generator in case of a ray. This is handled explicitly here.
 """
 
 function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIncircleSkip)
 
     x0 = xs[sig[1]]
 
-    c = maximum(dot(xs[g], u) for g in sig)
-    #u = convert(typeof(r), u)
-
     # only consider points on the right side of the hyperplane
+    c = maximum(dot(xs[g], u) for g in sig)
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
     # shift candidate onto the plane spanned by the generators
     candidate = r + u * (u' * (x0-r))
 
     # compute heuristic t assuming the resulting delauney simplex was regular
+    # this reduces number of extra searches by about 10%
     if length(sig) > 1
         n = length(sig)
         radius = norm(candidate-x0)
@@ -159,20 +158,9 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
         candidate += t * u
     end
 
-    is, ts = knn(searcher.tree, candidate, 1, false, skip)
-
-    if length(is) == 0  # no point was found
-        return [0; sig], Inf
-    end
+    is, _ = knn(searcher.tree, candidate, 1, false, skip)
+    (length(is) == 0) && return [0; sig], Inf  # no point was found
     i = is[1]
-    t = ts[1]
-
-    # I had this other check for no point was found
-    # I dont think it can happen anymore (due to changes in nn) but I leave it for now
-    if t == Inf
-        @warn "this should not happen"
-        return [0; sig], Inf
-    end
 
     # sucessively reduce incircles unless nothing new is found
     while true
@@ -181,9 +169,7 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
         candidate = r + t*u
         j, d = nn(searcher.tree, candidate)
 
-        if j in sig || j == i
-            break
-        end
+        (j in sig || j == i) && break  # converged to the smallest circle
 
         dold = sqrt(sum(abs2, x0-candidate))
         isapprox(d, dold) && @warn "degenerate vertex at $sig + [$i] ($d $dold)"
