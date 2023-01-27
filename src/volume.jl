@@ -129,7 +129,7 @@ end
 ## lets try computing the volumes ourselves, following martins idea of simplex decomposition.
 # We subdivide each delauney simplex into the subsimplices with the central voronoi vertex
 # instead of each of the voronoi generators as subsimplex-vertex. (1)
-# This smaller simplex contributes equal volume to all adjacent cells. (2)
+# This smaller simplex contributes equal volume to all adjacent cells. (2) *WRONG*
 # We further can compute the areas by means of the pyramid formula
 
 # this seems to work in two dimensions, but breaks for dim > 2
@@ -159,4 +159,40 @@ function myvolumes(vertices::Vertices, P::Points)
     end
     # TODO: return `inf` for unbounded volumes
     return Vs
+end
+
+
+## attempt to construct simplices in the corners of the voronoi diag., spanned by a vertex,
+## and the generator connection halves
+function myvolumes2(vertices, P)
+    dim = length(P[1])
+    Vs = zeros(length(P))
+    A = zeros(dim, dim)
+    for v in vertices
+        σ, x = v
+        X = reduce(hcat, P[σ])
+        for i in eachindex(σ)
+            base = X[:,i]
+            mask = 1:dim+1 .!= i
+            @. A = (X[:, mask] - base) / 2  # inner simplex, with generator in origin
+            V1 = det(A)
+            @. A += base - x   # corner simplex, with vertex in orign
+            V2 = -det(A)  # reverse sign to add volume on opposing site
+            s = 1
+            sign(V1) != sign(V2) && (s = -1)
+            V =  (abs(V1) + s * abs(V2))  / factorial(dim)
+
+
+            Vs[σ[i]] += V
+        end
+    end
+    return Vs
+end
+
+function test_myvol()
+    v = Dict([1,2,3]=>[1,1.])
+    p = [[0.,0],[0,2.],[2.,0]]
+    V = myvolumes2(v,p)
+    @assert V[1] == 1
+    V
 end
