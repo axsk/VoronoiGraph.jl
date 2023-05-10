@@ -147,17 +147,8 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     # only consider points on the right side of the hyperplane
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
-    # shift candidate onto the plane spanned by the generators
-    candidate = r + u * (u' * (x0-r))
 
-    # compute heuristic t assuming the resulting delauney simplex was regular
-    if length(sig) > 1
-        n = length(sig)
-        radius = norm(candidate-x0)
-        #radius = sum(norm(candidate-xs[s]) for s in sig) / n  # better but slower
-        t = radius / sqrt((n+1)*(n-1))
-        candidate += t * u
-    end
+    candidate = raycast_start_heuristic(sig,r,u,xs)
 
     is, ts = knn(searcher.tree, candidate, 1, false, skip)
 
@@ -185,6 +176,7 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
             break
         end
 
+        # why is this test actually meaningful?
         dold = sqrt(sum(abs2, x0-candidate))
         isapprox(d, dold) && @warn "degenerate vertex at $sig + [$i] ($d $dold)"
 
@@ -194,6 +186,25 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     tau = sort([i; sig])
 
     return tau, t
+end
+
+function raycast_start_heuristic(sig::Sigma, r::Point, u::Point, xs::Points)
+    x0 = xs[sig[1]]
+    n = length(sig)
+
+    # shift candidate onto the plane spanned by the generators
+    r = r + u * (u' * (x0-r))
+
+    # compute heuristic t assuming the resulting delauney simplex was regular
+    if n > 1
+        radius = norm(r-x0)
+        # more accurate but slower, not worth it
+        # radius = sum(norm(r-xs[s]) for s in sig) / n
+        t = radius / sqrt((n+1)*(n-1))
+        r += t * u
+    end
+
+    return r
 end
 
 
