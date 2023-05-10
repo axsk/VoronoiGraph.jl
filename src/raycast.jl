@@ -145,24 +145,14 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     c = maximum(dot(xs[g], u) for g in sig)
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
-    # shift candidate onto the plane spanned by the generators
-    candidate = r + u * (u' * (x0-r))
-
-    # compute heuristic t assuming the resulting delauney simplex was regular
-    # this reduces number of extra searches by about 10%
-    if length(sig) > 1
-        n = length(sig)
-        radius = norm(candidate-x0)
-        #radius = sum(norm(candidate-xs[s]) for s in sig) / n  # better but slower
-        t = radius / sqrt((n+1)*(n-1))
-        candidate += t * u
-    end
+    candidate = raycast_start_heuristic(sig, r, u, xs)
 
     is, _ = knn(searcher.tree, candidate, 1, false, skip)
     (length(is) == 0) && return [0; sig], Inf  # no point was found
     i = is[1]
 
     # sucessively reduce incircles unless nothing new is found
+    local t
     while true
         x = xs[i]
         t = (sum(abs2, r - x) - sum(abs2, r - x0)) / (2 * u' * (x-x0))
@@ -171,8 +161,9 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
 
         (j in sig || j == i) && break  # converged to the smallest circle
 
+        # why is this test actually meaningful?
         dold = sqrt(sum(abs2, x0-candidate))
-        isapprox(d, dold) && @warn "degenerate vertex at $sig + [$i] ($d $dold)"
+        isapprox(d, dold) && @warn "degenerate vertex at $sig + [$j]/[$i] ($d $dold)"
 
         i = j
     end
@@ -180,6 +171,28 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     tau = sort([i; sig])
 
     return tau, t
+end
+
+"""
+compute initial candidate assuming the resulting delauney simplex was regular
+this reduces number of extra searches by about 10%
+"""
+function raycast_start_heuristic(sig::Sigma, r::Point, u::Point, xs::Points)
+    x0 = xs[sig[1]]
+    n = length(sig)
+
+    # shift candidate onto the plane spanned by the generators
+    r = r + u * (u' * (x0-r))
+
+    if n > 1
+        radius = norm(r-x0)
+        # more accurate but slower, not worth it
+        # radius = sum(norm(r-xs[s]) for s in sig) / n
+        t = radius / sqrt((n+1)*(n-1))
+        r += t * u
+    end
+
+    return r
 end
 
 
