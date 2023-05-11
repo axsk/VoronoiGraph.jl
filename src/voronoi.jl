@@ -164,7 +164,7 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
     unbounded = 0
 
     while length(queue) > 0
-        yield()
+        #yield() we used this to ease ctrl+c, but it takes ~10% runtime
         (sig,r) = pop!(queue)
         for i in 1:length(sig)
 

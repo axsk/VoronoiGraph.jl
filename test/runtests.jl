@@ -15,13 +15,13 @@ seed = rand(UInt)
 Random.seed!(seed)
 
 # necessary condition for the voronoi diagram to be correct
-function test_equidistance(verts, xs)
+function test_equidistance(verts, xs; rtol = 1e-5)
     allsame(x) = all(y -> y ≈ first(x), x)
     for (sig, v) in verts
         dists = [norm(xs[s] - v) for s in sig]
         relerr = maximum(abs, 1 .- dists ./ dists[1])
-        if relerr > 1e-5
-            @show dists
+        if relerr > rtol
+            @show dists, length(xs)
             return false
         end
     end
@@ -35,11 +35,12 @@ smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
 
     @testset "Equidistance" begin
         for data in bigdata
+            dim = size(data, 1)
             @time verts, xs = voronoi(data)
             @test test_equidistance(verts, xs)
 
             vrand, xs = voronoi_random(data, 1000)
-            @test test_equidistance(vrand, xs)
+            @test test_equidistance(vrand, xs, rtol = 10. ^(-12 + dim))
 
             @test issubset(keys(vrand), keys(verts))
         end
