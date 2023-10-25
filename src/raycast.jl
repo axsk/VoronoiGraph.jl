@@ -146,6 +146,7 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     skip(i) = (dot(xs[i], u) <= c) || i ∈ sig
 
     candidate = raycast_start_heuristic(sig, r, u, xs)
+    #candidate = r
 
     is, _ = knn(searcher.tree, candidate, 1, false, skip)
     (length(is) == 0) && return [0; sig], Inf  # no point was found
@@ -173,22 +174,31 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     return tau, t
 end
 
+global USE_HEURISTIC::Bool = true
+use_heuristic(usage) = (global USE_HEURISTIC = usage)
+
 """
 compute initial candidate assuming the resulting delauney simplex was regular
 this reduces number of extra searches by about 10%
 """
 function raycast_start_heuristic(sig::Sigma, r::Point, u::Point, xs::Points)
+    USE_HEURISTIC || return r
     x0 = xs[sig[1]]
-    n = length(sig)
 
+    n = length(sig)
+    u = u / norm(u)
     # shift candidate onto the plane spanned by the generators
-    r = r + u * (u' * (x0-r))
+    r = r + u * (u' * (x0 - r))
 
     if n > 1
-        radius = norm(r-x0)
         # more accurate but slower, not worth it
         # radius = sum(norm(r-xs[s]) for s in sig) / n
-        t = radius / sqrt((n+1)*(n-1))
+
+        # This heuristic is even better, but I don't know how I derived it...
+        #t = radius / sqrt((n+1)*(n-1))
+
+        radius = norm(r - x0)
+        t = radius / sqrt(2 * n * (n + 1))
         r += t * u
     end
 

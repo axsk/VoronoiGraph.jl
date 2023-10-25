@@ -148,19 +148,23 @@ function u_qr_short(sig_del, xs, opposing)
     return u
 end
 
+global hit::Int
+global miss::Int
+global new::Int
+global cache::Bool = true
+
 """ BFS of vertices starting from `S0` """
 function explore(sig, r, xs::Points, searcher) # :: Vertices
     verts = Dict(sig=>r)
     queue = [sig=>r]
     edgecount = Dict{SVector{dim(xs), Int64}, Int}()
-    sizehint!(edgecount, round(Int, expected_edges(xs)))
+    sizehint!(edgecount, @show round(Int, expected_edges(xs)))
     sizehint!(verts, round(Int, expected_vertices(xs)))
     rays = Pair{Vector{Int64}, Int}[]
 
-    cache = true  # Caches if both points along an edge are known. Trades memory for runtime.
-    hit = 0
-    miss = 0
-    new = 0
+    global hit = 0
+    global miss = 0
+    global new = 0
     unbounded = 0
 
     while length(queue) > 0
@@ -196,11 +200,15 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
             end
         end
     end
-    #@show hit, miss, new, unbounded
+    @show length(edgecount)
+    @show Base.summarysize(verts) / 1024^2
+    @show Base.summarysize(edgecount) / 1024^2
+
+    @show hit, miss, new, unbounded
     return verts, rays
 end
 
-u_default = u_qr
+const u_default = u_qr
 
 deleteat(sig::Vector, i) = deleteat!(copy(sig), i)
 deleteat(x,y) = StaticArrays.deleteat(x,y)
