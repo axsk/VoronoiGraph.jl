@@ -1,7 +1,7 @@
 ### Count the number of nearest neighbour calls
 
 using VoronoiGraph
-using NearestNeighbors
+using VoronoiGraph.NearestNeighbors
 
 time_from_now(seconds) = round(Int, 10^9 * seconds + time_ns())
 

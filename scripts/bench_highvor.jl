@@ -77,19 +77,21 @@ dimkeys(r, d) = sort(collect(keys(filter(r) do pair
 end)))
 
 
-function plotperf(; r=r, d=2, methods=["qHull", "HighVoronoi", "VoronoiGraph"], label="", kwargs...)
+function plotperf(; r=r, d=2, methods=["qHull", "HighVoronoi", "VoronoiGraph"], kwargs...)
   plot()
   d = 2
   ks = dimkeys(r, d)
+  suff = ""
 
   for (i, method) in enumerate(methods)
     n = []
     ts = []
+    i > 1 && (suff = ".jl")
     for k in ks
       push!(n, k[2])
       push!(ts, median(r[k][method]).time / 1e9)
     end
-    plot!(n, ts, label="$label$method"; linecolor=i, kwargs...)
+    plot!(n, ts, label="$method$suff"; linecolor=i, kwargs...)
   end
 
   d = 6
@@ -107,7 +109,7 @@ function plotperf(; r=r, d=2, methods=["qHull", "HighVoronoi", "VoronoiGraph"], 
 
 
   plot!(xaxis=:log, yaxis=:log, title="Compute time", xlabel="n", ylabel="time (s)")
-  savefig("perf.pdf")
+  #savefig("perf.pdf")
 end
 
 

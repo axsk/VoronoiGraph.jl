@@ -194,11 +194,10 @@ function raycast_start_heuristic(sig::Sigma, r::Point, u::Point, xs::Points)
         # more accurate but slower, not worth it
         # radius = sum(norm(r-xs[s]) for s in sig) / n
 
-        # This heuristic is even better, but I don't know how I derived it...
-        #t = radius / sqrt((n+1)*(n-1))
-
         radius = norm(r - x0)
-        t = radius / sqrt(2 * n * (n + 1))
+        # This is derived by solving  r_d^2 = r_(d-1)^2 + h^2  
+        # for h with r_d = l*(d/(2(d+1))^(1/2)
+        t = radius / sqrt((n + 1) * (n - 1))
         r += t * u
     end
 
