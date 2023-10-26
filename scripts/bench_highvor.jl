@@ -8,8 +8,8 @@ suite = BenchmarkGroup()
 f(x) = [sum(x .^ 2)]
 f1(x) = sum(x .^ 2)
 
-for dim in 2:6
-  for n in [100, 1_000, 3_000, 10_000, 30_000, 100_000, 300_000]
+for dim in [2, 6]
+  for n in [100, 300, 1_000, 3_000, 10_000, 30_000, 100_000, 300_000]
     log10(n) + dim > 9.5 && continue
     local xs = HighVoronoi.VoronoiNodes(rand(dim, n))
     suite[(dim, n)] = BenchmarkGroup(["($dim, $n)"])
@@ -37,7 +37,7 @@ function time_mc(dim=4, n=20000)
 end
 
 
-r = run(suite)
+
 
 ratios = map(collect(r)) do ((dim, nx), r)
   (dim, nx) => /(median.([r["HighVoronoi"].times, r["VoronoiGraph"].times])...)
@@ -76,8 +76,8 @@ dimkeys(r, d) = sort(collect(keys(filter(r) do pair
   pair[1][1] == d
 end)))
 
-
-function plotperf(; r=r, d=2, methods=["qHull", "HighVoronoi", "VoronoiGraph"], kwargs...)
+using Plots
+function plotperf(r; d=2, methods=["qHull", "HighVoronoi", "VoronoiGraph"], kwargs...)
   plot()
   d = 2
   ks = dimkeys(r, d)
@@ -94,22 +94,30 @@ function plotperf(; r=r, d=2, methods=["qHull", "HighVoronoi", "VoronoiGraph"], 
     plot!(n, ts, label="$method$suff"; linecolor=i, kwargs...)
   end
 
-  d = 6
-  @show ks = dimkeys(r, d)
+  for d in [6]
 
-  for (i, method) in enumerate(methods)
-    n = []
-    ts = []
-    for k in ks
-      push!(n, k[2])
-      push!(ts, median(r[k][method]).time / 1e9)
+    @show ks = dimkeys(r, d)
+
+    for (i, method) in enumerate(methods)
+      n = []
+      ts = []
+      for k in ks
+        push!(n, k[2])
+        push!(ts, median(r[k][method]).time / 1e9)
+      end
+      plot!(n, ts, label=""; linecolor=i, kwargs...)
     end
-    plot!(n, ts, label=""; linecolor=i, kwargs...)
   end
 
 
   plot!(xaxis=:log, yaxis=:log, title="Compute time", xlabel="n", ylabel="time (s)")
+  annotate!(4.6, -1.5, "d = 2")
+  annotate!(2.5, 1.2, "d = 6")
   #savefig("perf.pdf")
 end
 
+function run()
+  r = @time BenchmarkTools.run(suite)
+  plotperf(r, marker=:o, markersize=2)
+end
 

@@ -152,13 +152,14 @@ global hit::Int
 global miss::Int
 global new::Int
 global cache::Bool = true
+global debug::Bool = false
 
 """ BFS of vertices starting from `S0` """
 function explore(sig, r, xs::Points, searcher) # :: Vertices
     verts = Dict(sig=>r)
     queue = [sig=>r]
     edgecount = Dict{SVector{dim(xs), Int64}, Int}()
-    sizehint!(edgecount, @show round(Int, expected_edges(xs)))
+    sizehint!(edgecount, round(Int, expected_edges(xs)))
     sizehint!(verts, round(Int, expected_vertices(xs)))
     rays = Pair{Vector{Int64}, Int}[]
 
@@ -200,12 +201,22 @@ function explore(sig, r, xs::Points, searcher) # :: Vertices
             end
         end
     end
-    @show length(edgecount)
-    @show Base.summarysize(verts) / 1024^2
-    @show Base.summarysize(edgecount) / 1024^2
 
-    @show hit, miss, new, unbounded
+    if debug
+        @show hit, miss, new, unbounded
+        report_memory(verts, "vertices")
+        report_memory(edgecount, "edges")
+    end
+
     return verts, rays
+end
+
+function report_memory(dict, label="")
+    println("$label: $(length(dict)) entries")
+    println("$label: $(Base.summarysize(dict) / 1024^2) MB")
+    sizehint!(dict, 0)
+    println("$label: $(Base.summarysize(dict) / 1024^2) MB after shrinking")
+
 end
 
 const u_default = u_qr
