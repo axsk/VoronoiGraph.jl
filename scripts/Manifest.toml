@@ -240,7 +240,7 @@ version = "0.4.9"
 
 [[deps.HighVoronoi]]
 deps = ["Crayons", "Distributed", "GLPK", "IterTools", "IterativeSolvers", "JLD2", "LinearAlgebra", "NearestNeighbors", "Polyhedra", "Printf", "SparseArrays", "SpecialFunctions", "StaticArrays"]
-git-tree-sha1 = "9d8e6536a920092cb44e6a37946f2521a9e3bbc2"
+path = "/home/htc/bzfsikor/.julia/dev/HighVoronoi"
 uuid = "1d30c219-805f-47bd-9cb8-33f291c94a4c"
 version = "1.0.2"
 
