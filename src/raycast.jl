@@ -116,6 +116,7 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
     return tau, t
 end
 
+global warn_degenerate::Bool = false
 
 struct RaycastIncircleSkip{T}
     tree::T
@@ -162,9 +163,11 @@ function raycast(sig::Sigma, r::Point, u::Point, xs::Points, searcher::RaycastIn
 
         (j in sig || j == i) && break  # converged to the smallest circle
 
-        # why is this test actually meaningful?
-        dold = sqrt(sum(abs2, x0-candidate))
-        isapprox(d, dold) && @warn "degenerate vertex at $sig + [$j]/[$i] ($d $dold)"
+        if warn_degenerate
+            # why is this test actually meaningful?
+            dold = sqrt(sum(abs2, x0 - candidate))
+            isapprox(d, dold) && @warn "degenerate vertex at $sig + [$j]/[$i] ($d $dold)"
+        end
 
         i = j
     end
