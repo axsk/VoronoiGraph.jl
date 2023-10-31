@@ -58,7 +58,7 @@ end
 function walk(sig::Sigma, r::Point, nsteps::Int, xs::Points, searcher, maxstuck::Int) :: Vertices
     verts = Dict(sig => r)
     nonew = 0
-    prog = Progress(maxstuck, 1, "Voronoi walk")
+    prog = Progress(maxstuck, dt=1, desc="Voronoi walk")
     progmax = 0
 
     for s in 1:nsteps

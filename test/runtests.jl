@@ -78,11 +78,11 @@ smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
         v, xs = voronoi(x)
         A, V = volumes(v, xs)  # exact reference volumes
 
-        Am, Vm = mc_volumes(xs, 10_000)
+        Am, Vm = mc_volumes(xs, 20_000)
         err = std(filter(isfinite, (Am-A)./A))
         @test err < 0.2
 
-        Am, Vm = mc_volumes(v, xs, 10_000)
+        Am, Vm = mc_volumes(v, xs, 20_000)
         err = std(filter(isfinite, (Am-A)./A))
         @test err < 0.2
     end

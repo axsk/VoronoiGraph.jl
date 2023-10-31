@@ -198,7 +198,7 @@ function raycast_start_heuristic(sig::Sigma, r::Point, u::Point, xs::Points)
         # radius = sum(norm(r-xs[s]) for s in sig) / n
 
         radius = norm(r - x0)
-        # This is derived by solving  r_d^2 = r_(d-1)^2 + h^2  
+        # This is derived by solving  r_d^2 = r_(d-1)^2 + h^2
         # for h with r_d = l*(d/(2(d+1))^(1/2)
         t = radius / sqrt((n + 1) * (n - 1))
         r += t * u
