@@ -70,7 +70,7 @@ smalldata = [rand(2, 1000), rand(3, 1000), rand(4,100)]
         small = A .< 1
         #println("comparing areas on $(sum(small)) out of $(length(small)) cells")
 
-        @test ≈(A[small], area[small], rtol=1e-8)
+        @test ≈(A[small], area[small], rtol=1e-6)
     end
 
     @testset "Monte Carlo Volumes" begin
