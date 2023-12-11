@@ -9,7 +9,8 @@ function paperplot()
   r = @time run(b)
   try
     plotperf(r)
-    savefig("bench.png")
+    savefig("benchmark.png")
+    savefig("benchmark.pdf")
   catch err
     println("plotting failed with $err:")
     showerr(stdout, err)
@@ -70,5 +71,5 @@ function plotperf(data_dict)
     end
     linecolor += 1
   end
-  plot!(legend=:bottomright, xaxis=:log, yaxis=:log)
+  plot!(legend=:bottomright, xaxis=:log, yaxis=:log, xlabel="n", ylabel="time [s]", title="Compute time")
 end
