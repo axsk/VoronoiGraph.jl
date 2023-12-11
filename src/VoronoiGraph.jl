@@ -2,7 +2,6 @@ module VoronoiGraph
 
 using LinearAlgebra
 using NearestNeighbors
-using Polyhedra
 using ProgressMeter
 using SparseArrays
 using StaticArrays

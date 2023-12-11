@@ -8,6 +8,7 @@ using RecipesBase
 using Statistics
 using VoronoiCells
 using VoronoiCells.GeometryBasics
+using Polyhedra
 
 # nice to have if tests dont pass
 seed = rand(UInt)

@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0-rc2"
 manifest_format = "2.0"
-project_hash = "632977c256cf94c5a8bbe503fe978d90d789caa1"
+project_hash = "7038f6583672eaeebc0561ec8f98352fd6cee929"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -1079,10 +1079,14 @@ uuid = "41fe7b60-77ed-43a1-b4f0-825fd5a5650d"
 version = "0.2.0"
 
 [[deps.VoronoiGraph]]
-deps = ["LinearAlgebra", "NearestNeighbors", "Polyhedra", "ProgressMeter", "RecipesBase", "SparseArrays", "SpecialFunctions", "StaticArrays"]
+deps = ["LinearAlgebra", "NearestNeighbors", "ProgressMeter", "RecipesBase", "SparseArrays", "SpecialFunctions", "StaticArrays"]
 path = ".."
 uuid = "e5f3e3e8-00d7-4f74-8011-648b521326aa"
 version = "0.2.3"
+weakdeps = ["Polyhedra"]
+
+    [deps.VoronoiGraph.extensions]
+    PolyhedraExt = "Polyhedra"
 
 [[deps.Vulkan_Loader_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Wayland_jll", "Xorg_libX11_jll", "Xorg_libXrandr_jll", "xkbcommon_jll"]
